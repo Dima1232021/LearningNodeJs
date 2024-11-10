@@ -3,7 +3,7 @@ import { prismaClient } from "..";
 import { compareSync, hashSync } from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
-import { JWT_SECRET } from "../secrets";
+import { JWT_SECRET, JWT_EXPIRATION } from "../secrets";
 import { BadRequestsException } from "../exceptions/bad-requests";
 import { ErrorCode } from "../exceptions/root";
 import { SignUpSchema } from "../schema/users";
@@ -52,13 +52,38 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     return next(new BadRequestsException('Incorrect password!', ErrorCode.INCORRECT_PASSWORD));
   }
 
-  const token = jwt.sign({
-    userId: user.id
-  }, JWT_SECRET);
+  const token = jwt.sign(
+    { userId: user.id },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRATION }
+  );
+
+  await prismaClient.revokedToken.deleteMany({
+    where: {
+      revokedAt: {
+        lt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      },
+    },
+  });
   
   res.status(202).json({ token });
 };
 
 export const me = async (req: Request, res: Response) => {
-  res.json(req.user)
+  const newToken = jwt.sign(
+    { userId: req.user!.id },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRATION }
+  );
+  res.json({ user: req.user, token: newToken });
+};
+
+export const logout = async (req: Request, res: Response) => {
+  await prismaClient.revokedToken.create({
+    data: {
+      token: req.token!,
+    },
+  });
+
+  res.status(200).json({});
 };
