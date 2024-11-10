@@ -12,6 +12,12 @@ const authMiddleware = async(req: Request, res: Response, next: NextFunction) =>
   if (!token) {
     return next(new UnauthorizedException('Unauthorized', ErrorCode.UNAUTHORIZED))
   }
+
+  const isRevoked = await prismaClient.revokedToken.findFirst({where: { token }});
+  if (isRevoked) {
+    return next(new UnauthorizedException("Token is revoked", ErrorCode.UNAUTHORIZED));
+  }
+
   try {
     const payload: {userId: number} = jwt.verify(token, JWT_SECRET) as any;
     const user = await prismaClient.user.findFirst({where: {id: payload.userId}});
@@ -21,6 +27,7 @@ const authMiddleware = async(req: Request, res: Response, next: NextFunction) =>
     } 
 
     req.user= user;
+    req.token = token;
     next();
   } catch (error) {
     next(new UnauthorizedException('Unauthorized', ErrorCode.UNAUTHORIZED, error))
