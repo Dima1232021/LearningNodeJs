@@ -6,8 +6,9 @@ import * as jwt from 'jsonwebtoken';
 import { JWT_SECRET, JWT_EXPIRATION } from "../secrets";
 import { BadRequestsException } from "../exceptions/bad-requests";
 import { ErrorCode } from "../exceptions/root";
-import { SignUpSchema } from "../schema/users";
+import { SignUpSchema, ForgotPasswordSchema } from "../schema/users";
 import { NotFoundException } from "../exceptions/not-found";
+import { sendEmail } from "../utils/sendEmail";
 
 const capitalizeFirstLetter = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -86,4 +87,37 @@ export const logout = async (req: Request, res: Response) => {
   });
 
   res.status(200).json({});
+};
+
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = ForgotPasswordSchema.parse(req.body);
+
+  const user = await prismaClient.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    return next(new NotFoundException("User with this email does not exist", ErrorCode.USER_NOT_FOUND));
+  }
+
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const hashedPassword = hashSync(resetCode, 10);
+
+  await prismaClient.user.update({
+    where: { email },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  await sendEmail({
+    to: email,
+    subject: "Password Reset Code",
+    text: `Your password reset code is: ${resetCode}`,
+  });
+
+  res.status(200).json({
+    message: "Password reset successfully. Please check your email for the reset code.",
+  });
 };

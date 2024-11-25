@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { prismaClient } from "..";
 import { compareSync, hashSync } from "bcrypt";
-import { BadRequestsException } from "../exceptions/bad-requests";
 import { ErrorCode } from "../exceptions/root";
 import { ValidationSchema } from '../schema/users';
 import { z } from 'zod';
