@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { login, me, signup, logout } from "../controllers/auth";
+import { login, me, signup, logout, forgotPassword } from "../controllers/auth";
 import { errorHandler } from "../error-handler";
 import authMiddleware from "../middlewares/auth";
 
@@ -10,5 +10,6 @@ authRoutes.post('/signup', errorHandler(signup));
 authRoutes.post('/login', errorHandler(login));
 authRoutes.get('/me', [authMiddleware], errorHandler(me));
 authRoutes.get('/logout', [authMiddleware], errorHandler(logout));
+authRoutes.post('/forgot-password', errorHandler(forgotPassword));
 
 export default authRoutes;

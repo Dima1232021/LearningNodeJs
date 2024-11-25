@@ -6,6 +6,6 @@ import authMiddleware from "../middlewares/auth";
 
 const accountsRoutes: Router = Router();
 
-accountsRoutes.patch('/updateUserPreferences', [authMiddleware], errorHandler(updateUserPreferences));
+accountsRoutes.patch('/update-user-preferences', [authMiddleware], errorHandler(updateUserPreferences));
 
 export default accountsRoutes;

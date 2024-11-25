@@ -14,3 +14,7 @@ export const ValidationSchema = z.object({
   confirmNewPassword: z.string().min(6, "Confirm new password must be at least 6 characters long").max(16, "Confirm new password cannot exceed 16 characters").optional(),
   currentPassword: z.string().optional(),
 });
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
